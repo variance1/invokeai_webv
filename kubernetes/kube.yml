@@ -1,55 +1,58 @@
-apiVersion: apps/v1
-kind: Deployment
+apiVersion: virtualservers.coreweave.com/v1alpha1
+kind: VirtualServer
 metadata:
-  name: invoke-ai-zeref
+  name: invoke-ai-by-zeref
 spec:
-  replicas: 1
-  revisionHistoryLimit: 0
-  selector:
-    matchLabels:
-      app.kubernetes.io/name: invoke-ai-zeref
-  strategy:
-    type: RollingUpdate
-    rollingUpdate:
-      maxUnavailable: "50%"
-      maxSurge: 0
-  template:
-    metadata:
-      annotations:
-        qos.coreweave.cloud/drain: "false"
-      labels:
-        app.kubernetes.io/name: invoke-ai-zeref
-    spec:
-      containers:
-        - name: invoke-ai-zeref-container
-          image: ubuntu2204-nvidia-515-43-04-1-docker-master-20220831-ord1
-          resources:
-            requests:
-              cpu: 1500m # The CPU unit is mili-cores. 500m is 0.5 cores
-              memory: 4Gi
-            limits:
-              nvidia.com/gpu: 1
-          ports:
-            - containerPort: 80
-              name: http
-            - containerPort: 22
-              name: ssh
-            - containerPort: 443
-              name: https
-            - containerPort: 8080
-              name: bolt
-
-      affinity:
-        nodeAffinity:
-          # This will REQUIRE the Pod to be run on a system with a Pascal GPU
-          requiredDuringSchedulingIgnoredDuringExecution:
-            nodeSelectorTerms:
-            - matchExpressions:
-              - key: gpu.nvidia.com/class
-                operator: In
-                values:
-                  - RTX_A6000
-              - key: failure-domain.beta.kubernetes.io/region
-                operator: In
-                values:
-                  - ORD1
+  region: ORD1
+  os:
+    type: linux
+    enableUEFIBoot: false
+  resources:
+    gpu:
+      type: RTX_A6000
+      count: 1
+    cpu:
+      count: 3
+    memory: 16Gi
+  runStrategy: RerunOnFailure
+  storage:
+    root:
+      size: 40Gi
+      storageClassName: block-nvme-ord1
+      source:
+        pvc:
+          namespace: vd-images
+          name:  ubuntu2204-nvidia-515-43-04-1-docker-master-20220831-ord1
+      volumeMode: Block
+  users:
+    - username: zeref
+      password: dragoneel  
+  network:
+    public: true
+    tcp:
+      ports:
+        - 22
+        - 80
+        - 443
+  cloudInit: |
+    # Write a simple script
+    write_files:
+    - content: |
+        #!/bin/bash
+        echo "Hello world!"
+      path: $HOME/deploy.sh
+      permissions: '0744'
+      owner: zeref:zeref
+    # Update packages
+    package_update: true
+    # Install packages
+    packages:
+      - curl
+      - git
+    # Run additional commands
+    runcmd:
+      - [df, -h]
+      - [git, version]
+      - [curl, --version ]
+      - [bash, $HOME/deploy.sh]
+  initializeRunning: true
