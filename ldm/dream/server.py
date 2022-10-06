@@ -6,6 +6,7 @@ import os
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from ldm.dream.pngwriter import PngWriter, PromptFormatter
 from threading import Event
+from urllib.parse import urlparse, parse_qs
 
 def build_opt(post_data, seed, gfpgan_model_exists):
     opt = argparse.Namespace()
@@ -69,15 +70,19 @@ class DreamServer(BaseHTTPRequestHandler):
             self.end_headers()
             with open("./static/dream_web/index.html", "rb") as content:
                 self.wfile.write(content.read())
-        if self.path == "/image":
+        if self.path.startswith("/image"):
+
             self.send_response(200)
             self.send_header("Content-type", "image/png")
             self.end_headers()
 
+            # get the query string
+            qs = urlparse(self.path).query
+            # get the prompt
+            prompt = parse_qs(qs)['s'][0]
+
             # unfortunately this import can't be at the top level, since that would cause a circular import
             from ldm.gfpgan.gfpgan_tools import gfpgan_model_exists
-
-            prompt = "an astronaut riding a horse"
 
             post_data = {
                 "prompt": prompt,
