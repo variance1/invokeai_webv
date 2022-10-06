@@ -1,0 +1,55 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: invoke-ai-zeref
+spec:
+  replicas: 1
+  revisionHistoryLimit: 0
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: invoke-ai-zeref
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: "50%"
+      maxSurge: 0
+  template:
+    metadata:
+      annotations:
+        qos.coreweave.cloud/drain: "false"
+      labels:
+        app.kubernetes.io/name: invoke-ai-zeref
+    spec:
+      containers:
+        - name: invoke-ai-zeref-container
+          image: ubuntu2204-nvidia-515-43-04-1-docker-master-20220831-ord1
+          resources:
+            requests:
+              cpu: 1500m # The CPU unit is mili-cores. 500m is 0.5 cores
+              memory: 4Gi
+            limits:
+              nvidia.com/gpu: 1
+          ports:
+            - containerPort: 80
+              name: http
+            - containerPort: 22
+              name: ssh
+            - containerPort: 443
+              name: https
+            - containerPort: 8080
+              name: bolt
+
+      affinity:
+        nodeAffinity:
+          # This will REQUIRE the Pod to be run on a system with a Pascal GPU
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+            - matchExpressions:
+              - key: gpu.nvidia.com/class
+                operator: In
+                values:
+                  - RTX_A6000
+              - key: failure-domain.beta.kubernetes.io/region
+                operator: In
+                values:
+                  - ORD1
