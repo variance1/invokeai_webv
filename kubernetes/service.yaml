@@ -1,0 +1,31 @@
+apiVersion: v1
+kind: Service
+metadata:
+  annotations:
+    metallb.universe.tf/address-pool: public-ord1
+    # Setting a sharing key might save public IP addresses
+    # See https://metallb.universe.tf/usage/#ip-address-sharing for more detail
+    metallb.universe.tf/allow-shared-ip: example-1
+  name: invoke-ai-zeref
+spec:
+  type: LoadBalancer
+  externalTrafficPolicy: Local
+  ports:
+    - name: sshd
+      port: 22
+      protocol: TCP
+      targetPort: sshd
+    - name: http
+      port: 80
+      protocol: TCP
+      targetPort: 80
+    - name: https
+      port: 443
+      protocol: TCP
+      targetPort: 443
+    - name: bolt
+      port: 8080
+      protocol: TCP
+      targetPort: 8080
+  selector:
+    app.kubernetes.io/name: invoke-ai-zeref

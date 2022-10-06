@@ -1,0 +1,49 @@
+affinity: {}
+annotations: {}
+cloudInit: ''
+disableReadinessProbe: false
+initializeRunning: true
+labels: {}
+network:
+  directAttachLoadBalancerIP: true
+  disableK8sNetworking: false
+  dnsPolicy: ClusterFirst
+  floatingIPs: []
+  macAddress: {}
+  public: true
+  tcp:
+    ports: []
+  udp:
+    ports: []
+  vpcs: []
+persistentVolumes: []
+readinessProbePort: 1337
+region: ORD1
+resources:
+  cpu:
+    count: 4
+    type: ''
+  definition: a
+  gpu:
+    count: 1
+    type: RTX_A6000
+  memory: 8Gi
+runStrategy: RerunOnFailure
+storage:
+  additionalDisks: []
+  filesystems: []
+  root:
+    accessMode: ReadWriteOnce
+    os:
+      type: linux
+      uefi: false
+    size: 40Gi
+    source:
+      name: ubuntu2204-nvidia-515-43-04-1-docker-master-20220831-ord1
+      namespace: vd-images
+      type: pvc
+    storageClassName: block-nvme-ord1
+    volumeMode: Block
+users:
+  - password root
+    username:gpu
