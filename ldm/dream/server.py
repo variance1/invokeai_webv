@@ -68,8 +68,8 @@ class DreamServer(BaseHTTPRequestHandler):
             self.send_response(200)
             self.send_header("Content-type", "text/html")
             self.end_headers()
-            with open("./static/dream_web/index.html", "rb") as content:
-                self.wfile.write(content.read())
+            #with open("./static/dream_web/index.html", "rb") as content:
+            self.wfile.write(bytes("403: Forbidden<br>Use the /image?s=someprompt endpoint.", "utf-8"))
         if self.path.startswith("/image"):
 
             self.send_response(200)
